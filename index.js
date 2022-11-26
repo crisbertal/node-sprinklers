@@ -1,28 +1,6 @@
-// Objeto JSON temporal que almacena los usuarios
-// esto se va a guardar despues en una BD. Va a ser modificable 
-let users = [
-  {
-    "name": "Cristobal",
-    "pass": "1234",
-    "channel": "verde",
-  },
-  {
-    "name": "Edu",
-    "pass": "1234",
-    "channel": "verde"
-  },
-  {
-    "name": "Dani",
-    "pass": "1234",
-    "channel": "rojo"
-  },
-  {
-    "name": "Laura",
-    "pass": "1234",
-    "channel": "rojo"
-  }
-]
-
+// **************************************************************************
+// Librerias de Nodejs
+// **************************************************************************
 const express = require('express');         // Peticiones http a server
 const http = require('http');
 const url = require('url');
@@ -30,22 +8,27 @@ const bodyParser = require('body-parser');  // Lectura de JSON por express
 const cors = require('cors');
 const WebSocket = require('ws');            // Sockets
 
+// **************************************************************************
+// Creacion del servidor de express
+// **************************************************************************
 // Crea el server de express
 const app = express();
+const server = http.createServer(app)
 
 // middleware
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors())
+app.use(cors())     // Si lo quitas no puedes utilizar localhost y tira fallo
 
-const server = http.createServer(app)
 
+// **************************************************************************
+// Creacion de los canales para websockets
+// **************************************************************************
 // Puedes crear tantos sockets como quieras
 // Se gestionan dentro del server de Express
 // Todo esta en la documentacion de ws (multiple servers)
 const wsRojo = new WebSocket.Server({ noServer: true });
 const wsVerde = new WebSocket.Server({ noServer: true });
-
 
 // Set con el listado de usuarios conectados
 const usersRojo = new Set();
@@ -72,19 +55,20 @@ const handleSocket = (ws, usuarios, contador, clientes) => {
   };
   usuarios.add(userRef);
 
-  console.log(`Usuario conectado al canal rojo, hay ${usuarios.size} ws conectados`)
+  console.log(`Hay ${usuarios.size} websockets conectados`)
+  console.log(`Los usuarios son ${clientes}`)
 
   // Envia el contador actual
   ws.send(JSON.stringify({ body: contador }))
+  console.log("se ha enviado el contador actual", contador)
 
   // Ejecuta al recibir un mensaje
   ws.on('message', (message) => {
     // Al recibir un mensaje se reenvía a todos los conectados
     try {
-
       // Convierte a JSON el mensaje stringify
       const data = JSON.parse(message);
-      console.log(data)
+      console.log("Los datos recibidos son: ", data)
 
       // Comprueba el tipo de mensaje
       if (data.type === 'Connection') {
@@ -103,6 +87,7 @@ const handleSocket = (ws, usuarios, contador, clientes) => {
 
         // incrementa el contador
         contador = data.body + 1;
+        console.log("Contador actualizado a ", contador)
 
         // Crea un nuevo mensaje como objeto JSON
         const messageToSend = {
@@ -113,6 +98,7 @@ const handleSocket = (ws, usuarios, contador, clientes) => {
 
         // Envia el mensaje a todos
         sendMessage(messageToSend, usuarios);
+        console.log("Mensaje enviado")
       }
 
     } catch (e) {
