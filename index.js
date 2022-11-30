@@ -6,6 +6,7 @@ const http = require('http');
 const url = require('url');
 const bodyParser = require('body-parser');  // Lectura de JSON por express
 const cors = require('cors');
+const { Server } = require("socket.io");
 const WebSocket = require('ws');            // Sockets
 
 // **************************************************************************
@@ -14,6 +15,11 @@ const WebSocket = require('ws');            // Sockets
 // Crea el server de express
 const app = express();
 const server = http.createServer(app)
+const io = new Server(server);        // Crea un server de Socket.io
+
+io.on('connection', (socket) => {
+  console.log("Se ha conectado un usuario")
+})
 
 // middleware
 app.use(bodyParser.json())
